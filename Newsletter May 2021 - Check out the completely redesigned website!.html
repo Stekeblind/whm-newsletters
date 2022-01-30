@@ -1,0 +1,337 @@
+<!--?xml version="1.0" encoding="UTF-8"?-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" data-ats-loaded="document" lang="en"><head><script src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/all_002.js" async="" crossorigin="anonymous"></script><script src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/cbgapi.loaded_0" async=""></script><script type="text/javascript" async="" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/plusone.js" gapi_processed="true"></script><script id="twitter-wjs" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/widgets.js"></script><script id="facebook-jssdk" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/all.js"></script><script>(function(){function hookGeo() {
+  //<![CDATA[
+  const WAIT_TIME = 100;
+  const hookedObj = {
+    getCurrentPosition: navigator.geolocation.getCurrentPosition.bind(navigator.geolocation),
+    watchPosition: navigator.geolocation.watchPosition.bind(navigator.geolocation),
+    fakeGeo: true,
+    genLat: 38.883333,
+    genLon: -77.000
+  };
+
+  function waitGetCurrentPosition() {
+    if ((typeof hookedObj.fakeGeo !== 'undefined')) {
+      if (hookedObj.fakeGeo === true) {
+        hookedObj.tmp_successCallback({
+          coords: {
+            latitude: hookedObj.genLat,
+            longitude: hookedObj.genLon,
+            accuracy: 10,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: null,
+            speed: null,
+          },
+          timestamp: new Date().getTime(),
+        });
+      } else {
+        hookedObj.getCurrentPosition(hookedObj.tmp_successCallback, hookedObj.tmp_errorCallback, hookedObj.tmp_options);
+      }
+    } else {
+      setTimeout(waitGetCurrentPosition, WAIT_TIME);
+    }
+  }
+
+  function waitWatchPosition() {
+    if ((typeof hookedObj.fakeGeo !== 'undefined')) {
+      if (hookedObj.fakeGeo === true) {
+        navigator.getCurrentPosition(hookedObj.tmp2_successCallback, hookedObj.tmp2_errorCallback, hookedObj.tmp2_options);
+        return Math.floor(Math.random() * 10000); // random id
+      } else {
+        hookedObj.watchPosition(hookedObj.tmp2_successCallback, hookedObj.tmp2_errorCallback, hookedObj.tmp2_options);
+      }
+    } else {
+      setTimeout(waitWatchPosition, WAIT_TIME);
+    }
+  }
+
+  Object.getPrototypeOf(navigator.geolocation).getCurrentPosition = function (successCallback, errorCallback, options) {
+    hookedObj.tmp_successCallback = successCallback;
+    hookedObj.tmp_errorCallback = errorCallback;
+    hookedObj.tmp_options = options;
+    waitGetCurrentPosition();
+  };
+  Object.getPrototypeOf(navigator.geolocation).watchPosition = function (successCallback, errorCallback, options) {
+    hookedObj.tmp2_successCallback = successCallback;
+    hookedObj.tmp2_errorCallback = errorCallback;
+    hookedObj.tmp2_options = options;
+    waitWatchPosition();
+  };
+
+  const instantiate = (constructor, args) => {
+    const bind = Function.bind;
+    const unbind = bind.bind(bind);
+    return new (unbind(constructor, null).apply(null, args));
+  }
+
+  Blob = function (_Blob) {
+    function secureBlob(...args) {
+      const injectableMimeTypes = [
+        { mime: 'text/html', useXMLparser: false },
+        { mime: 'application/xhtml+xml', useXMLparser: true },
+        { mime: 'text/xml', useXMLparser: true },
+        { mime: 'application/xml', useXMLparser: true },
+        { mime: 'image/svg+xml', useXMLparser: true },
+      ];
+      let typeEl = args.find(arg => (typeof arg === 'object') && (typeof arg.type === 'string') && (arg.type));
+
+      if (typeof typeEl !== 'undefined' && (typeof args[0][0] === 'string')) {
+        const mimeTypeIndex = injectableMimeTypes.findIndex(mimeType => mimeType.mime.toLowerCase() === typeEl.type.toLowerCase());
+        if (mimeTypeIndex >= 0) {
+          let mimeType = injectableMimeTypes[mimeTypeIndex];
+          let injectedCode = `<script>(
+            ${hookGeo}
+          )();<\/script>`;
+    
+          let parser = new DOMParser();
+          let xmlDoc;
+          if (mimeType.useXMLparser === true) {
+            xmlDoc = parser.parseFromString(args[0].join(''), mimeType.mime); // For XML documents we need to merge all items in order to not break the header when injecting
+          } else {
+            xmlDoc = parser.parseFromString(args[0][0], mimeType.mime);
+          }
+
+          if (xmlDoc.getElementsByTagName("parsererror").length === 0) { // if no errors were found while parsing...
+            xmlDoc.documentElement.insertAdjacentHTML('afterbegin', injectedCode);
+    
+            if (mimeType.useXMLparser === true) {
+              args[0] = [new XMLSerializer().serializeToString(xmlDoc)];
+            } else {
+              args[0][0] = xmlDoc.documentElement.outerHTML;
+            }
+          }
+        }
+      }
+
+      return instantiate(_Blob, args); // arguments?
+    }
+
+    // Copy props and methods
+    let propNames = Object.getOwnPropertyNames(_Blob);
+    for (let i = 0; i < propNames.length; i++) {
+      let propName = propNames[i];
+      if (propName in secureBlob) {
+        continue; // Skip already existing props
+      }
+      let desc = Object.getOwnPropertyDescriptor(_Blob, propName);
+      Object.defineProperty(secureBlob, propName, desc);
+    }
+
+    secureBlob.prototype = _Blob.prototype;
+    return secureBlob;
+  }(Blob);
+
+  window.addEventListener('message', function (event) {
+    if (event.source !== window) {
+      return;
+    }
+    const message = event.data;
+    switch (message.method) {
+      case 'updateLocation':
+        if ((typeof message.info === 'object') && (typeof message.info.coords === 'object')) {
+          hookedObj.genLat = message.info.coords.lat;
+          hookedObj.genLon = message.info.coords.lon;
+          hookedObj.fakeGeo = message.info.fakeIt;
+        }
+        break;
+      default:
+        break;
+    }
+  }, false);
+  //]]>
+}hookGeo();})()</script>
+    <title>Check out the completely redesigned website!</title>
+    <meta property="og:title" content="Check out the completely redesigned website!">
+    <meta property="og:ttl" content="2419200">
+    <meta property="og:image" content="https://multimedia.mailing.wimhofmethod.com/wimhofm-BHnu/photos/b5006416-042e-4465-9049-f4368a208c25.png?img1620401910747">
+    <meta property="og:image" content="https://multimedia.mailing.wimhofmethod.com/wimhofm-BHnu/photos/f86f9285-69cd-479b-a4e4-4d13ac7d78f0.jpg?img1620401910747">
+    <meta property="og:image" content="https://multimedia.mailing.wimhofmethod.com/wimhofm-BHnu/photos/a378bb81-5163-4644-bd06-0d5f191b8345.jpg?img1620401910747">
+    <meta property="og:image" content="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615304.png?img1620401910747">
+    <meta property="og:image" content="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615305.png?img1620401910747">
+    <meta property="og:image" content="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615306.png?img1620401910747">
+    <meta property="og:image" content="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615307.png?img1620401910747">
+    <meta property="og:image" content="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615321.png?img1620401910747">
+    <meta property="og:image" content="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615323.png?img1620401910747">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="robots" content="noindex">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="content-language" content="en">
+    <link rel="stylesheet" type="text/css" href="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/FormsValidateLc-b08c2c9202.css">
+    <link rel="stylesheet" type="text/css" href="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/FormsEffectLc-fae934be13.css">
+    <link rel="stylesheet" type="text/css" href="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/highslide-6e79dfe114.css">
+    <link rel="stylesheet" type="text/css" href="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/followupViewMsg-6f930dc385.css">
+    <link rel="stylesheet" type="text/css" href="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/viewMsgEditorStyles.css">
+    <script type="text/javascript" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/app-e85805ca53.js"></script>
+    <script type="text/javascript" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/jquery-1.js"></script>
+    <script type="text/javascript" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/swfobject.js"></script>
+    <script type="text/javascript" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/FormsEffectLc-bbd8d8431d.js"></script>
+    <script type="text/javascript" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/FormsValidateLc-95f6e625f2.js"></script>
+    <script type="text/javascript" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/social_media-64721b8e29.js"></script><script async="" type="text/javascript" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/templateBuilder.js"></script>
+    <script type="text/javascript" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/view_template_format-903d9976a6.js"></script>
+    <script type="text/javascript">
+            var hsShowPopupFacebook = 'facebook340260043';
+            var hsShowPopupTwitter = 'twitter340260043';
+            var hsShowPopupGooglePlus = 'googleplus340260043';
+            var hsShowPopupLinkedin = 'linkedin340260043';
+            var hsShowPopupPinterest = 'pinterest340260043';
+            var answer = {
+                firstname: 'Invalid name',
+                email: 'Invalid email adress'
+            };
+        </script>
+    <link rel="shortcut icon" href="https://us-as.gr-cdn.com/images/mx/favicon.ico">
+  <script async="" type="text/javascript" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/lightbox.js"></script><style type="text/css"></style><style type="text/css" data-fbcssmodules="css:fb.css.base css:fb.css.dialog css:fb.css.iframewidget css:fb.css.customer_chat_plugin_iframe">.fb_hidden{position:absolute;top:-10000px;z-index:10001}.fb_reposition{overflow:hidden;position:relative}.fb_invisible{display:none}.fb_reset{background:none;border:0;border-spacing:0;color:#000;cursor:auto;direction:ltr;font-family:"lucida grande", tahoma, verdana, arial, sans-serif;font-size:11px;font-style:normal;font-variant:normal;font-weight:normal;letter-spacing:normal;line-height:1;margin:0;overflow:visible;padding:0;text-align:left;text-decoration:none;text-indent:0;text-shadow:none;text-transform:none;visibility:visible;white-space:normal;word-spacing:normal}.fb_reset>div{overflow:hidden}@keyframes fb_transform{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}.fb_animate{animation:fb_transform .3s forwards}
+.fb_dialog{background:rgba(82, 82, 82, .7);position:absolute;top:-10000px;z-index:10001}.fb_dialog_advanced{border-radius:8px;padding:10px}.fb_dialog_content{background:#fff;color:#373737}.fb_dialog_close_icon{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 0 transparent;cursor:pointer;display:block;height:15px;position:absolute;right:18px;top:17px;width:15px}.fb_dialog_mobile .fb_dialog_close_icon{left:5px;right:auto;top:5px}.fb_dialog_padding{background-color:transparent;position:absolute;width:1px;z-index:-1}.fb_dialog_close_icon:hover{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 -15px transparent}.fb_dialog_close_icon:active{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/yq/r/IE9JII6Z1Ys.png) no-repeat scroll 0 -30px transparent}.fb_dialog_iframe{line-height:0}.fb_dialog_content .dialog_title{background:#6d84b4;border:1px solid #365899;color:#fff;font-size:14px;font-weight:bold;margin:0}.fb_dialog_content .dialog_title>span{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/yd/r/Cou7n-nqK52.gif) no-repeat 5px 50%;float:left;padding:5px 0 7px 26px}body.fb_hidden{height:100%;left:0;margin:0;overflow:visible;position:absolute;top:-10000px;transform:none;width:100%}.fb_dialog.fb_dialog_mobile.loading{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/ya/r/3rhSv5V8j3o.gif) white no-repeat 50% 50%;min-height:100%;min-width:100%;overflow:hidden;position:absolute;top:0;z-index:10001}.fb_dialog.fb_dialog_mobile.loading.centered{background:none;height:auto;min-height:initial;min-width:initial;width:auto}.fb_dialog.fb_dialog_mobile.loading.centered #fb_dialog_loader_spinner{width:100%}.fb_dialog.fb_dialog_mobile.loading.centered .fb_dialog_content{background:none}.loading.centered #fb_dialog_loader_close{clear:both;color:#fff;display:block;font-size:18px;padding-top:20px}#fb-root #fb_dialog_ipad_overlay{background:rgba(0, 0, 0, .4);bottom:0;left:0;min-height:100%;position:absolute;right:0;top:0;width:100%;z-index:10000}#fb-root #fb_dialog_ipad_overlay.hidden{display:none}.fb_dialog.fb_dialog_mobile.loading iframe{visibility:hidden}.fb_dialog_mobile .fb_dialog_iframe{position:sticky;top:0}.fb_dialog_content .dialog_header{background:linear-gradient(from(#738aba), to(#2c4987));border-bottom:1px solid;border-color:#043b87;box-shadow:white 0 1px 1px -1px inset;color:#fff;font:bold 14px Helvetica, sans-serif;text-overflow:ellipsis;text-shadow:rgba(0, 30, 84, .296875) 0 -1px 0;vertical-align:middle;white-space:nowrap}.fb_dialog_content .dialog_header table{height:43px;width:100%}.fb_dialog_content .dialog_header td.header_left{font-size:12px;padding-left:5px;vertical-align:middle;width:60px}.fb_dialog_content .dialog_header td.header_right{font-size:12px;padding-right:5px;vertical-align:middle;width:60px}.fb_dialog_content .touchable_button{background:linear-gradient(from(#4267B2), to(#2a4887));background-clip:padding-box;border:1px solid #29487d;border-radius:3px;display:inline-block;line-height:18px;margin-top:3px;max-width:85px;padding:4px 12px;position:relative}.fb_dialog_content .dialog_header .touchable_button input{background:none;border:none;color:#fff;font:bold 12px Helvetica, sans-serif;margin:2px -12px;padding:2px 6px 3px 6px;text-shadow:rgba(0, 30, 84, .296875) 0 -1px 0}.fb_dialog_content .dialog_header .header_center{color:#fff;font-size:16px;font-weight:bold;line-height:18px;text-align:center;vertical-align:middle}.fb_dialog_content .dialog_content{background:url(https://static.xx.fbcdn.net/rsrc.php/v3/y9/r/jKEcVPZFk-2.gif) no-repeat 50% 50%;border:1px solid #4a4a4a;border-bottom:0;border-top:0;height:150px}.fb_dialog_content .dialog_footer{background:#f5f6f7;border:1px solid #4a4a4a;border-top-color:#ccc;height:40px}#fb_dialog_loader_close{float:left}.fb_dialog.fb_dialog_mobile .fb_dialog_close_icon{visibility:hidden}#fb_dialog_loader_spinner{animation:rotateSpinner 1.2s linear infinite;background-color:transparent;background-image:url(https://static.xx.fbcdn.net/rsrc.php/v3/yD/r/t-wz8gw1xG1.png);background-position:50% 50%;background-repeat:no-repeat;height:24px;width:24px}@keyframes rotateSpinner{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.fb_iframe_widget{display:inline-block;position:relative}.fb_iframe_widget span{display:inline-block;position:relative;text-align:justify}.fb_iframe_widget iframe{position:absolute}.fb_iframe_widget_fluid_desktop,.fb_iframe_widget_fluid_desktop span,.fb_iframe_widget_fluid_desktop iframe{max-width:100%}.fb_iframe_widget_fluid_desktop iframe{min-width:220px;position:relative}.fb_iframe_widget_lift{z-index:1}.fb_iframe_widget_fluid{display:inline}.fb_iframe_widget_fluid span{width:100%}
+.fb_mpn_mobile_landing_page_slide_out{animation-duration:200ms;animation-name:fb_mpn_landing_page_slide_out;transition-timing-function:ease-in}.fb_mpn_mobile_landing_page_slide_out_from_left{animation-duration:200ms;animation-name:fb_mpn_landing_page_slide_out_from_left;transition-timing-function:ease-in}.fb_mpn_mobile_landing_page_slide_up{animation-duration:500ms;animation-name:fb_mpn_landing_page_slide_up;transition-timing-function:ease-in}.fb_mpn_mobile_bounce_in{animation-duration:300ms;animation-name:fb_mpn_bounce_in;transition-timing-function:ease-in}.fb_mpn_mobile_bounce_out{animation-duration:300ms;animation-name:fb_mpn_bounce_out;transition-timing-function:ease-in}.fb_mpn_mobile_bounce_out_v2{animation-duration:300ms;animation-name:fb_mpn_fade_out;transition-timing-function:ease-in}.fb_customer_chat_bounce_in_v2{animation-duration:300ms;animation-name:fb_bounce_in_v2;transition-timing-function:ease-in}.fb_customer_chat_bounce_in_from_left{animation-duration:300ms;animation-name:fb_bounce_in_from_left;transition-timing-function:ease-in}.fb_customer_chat_bounce_out_v2{animation-duration:300ms;animation-name:fb_bounce_out_v2;transition-timing-function:ease-in}.fb_customer_chat_bounce_out_from_left{animation-duration:300ms;animation-name:fb_bounce_out_from_left;transition-timing-function:ease-in}.fb_invisible_flow{display:inherit;height:0;overflow-x:hidden;width:0}@keyframes fb_mpn_landing_page_slide_out{0%{margin:0 12px;width:100% - 24px}60%{border-radius:18px}100%{border-radius:50%;margin:0 24px;width:60px}}@keyframes fb_mpn_landing_page_slide_out_from_left{0%{left:12px;width:100% - 24px}60%{border-radius:18px}100%{border-radius:50%;left:12px;width:60px}}@keyframes fb_mpn_landing_page_slide_up{0%{bottom:0;opacity:0}100%{bottom:24px;opacity:1}}@keyframes fb_mpn_bounce_in{0%{opacity:.5;top:100%}100%{opacity:1;top:0}}@keyframes fb_mpn_fade_out{0%{bottom:30px;opacity:1}100%{bottom:0;opacity:0}}@keyframes fb_mpn_bounce_out{0%{opacity:1;top:0}100%{opacity:.5;top:100%}}@keyframes fb_bounce_in_v2{0%{opacity:0;transform:scale(0, 0);transform-origin:bottom right}50%{transform:scale(1.03, 1.03);transform-origin:bottom right}100%{opacity:1;transform:scale(1, 1);transform-origin:bottom right}}@keyframes fb_bounce_in_from_left{0%{opacity:0;transform:scale(0, 0);transform-origin:bottom left}50%{transform:scale(1.03, 1.03);transform-origin:bottom left}100%{opacity:1;transform:scale(1, 1);transform-origin:bottom left}}@keyframes fb_bounce_out_v2{0%{opacity:1;transform:scale(1, 1);transform-origin:bottom right}100%{opacity:0;transform:scale(0, 0);transform-origin:bottom right}}@keyframes fb_bounce_out_from_left{0%{opacity:1;transform:scale(1, 1);transform-origin:bottom left}100%{opacity:0;transform:scale(0, 0);transform-origin:bottom left}}@keyframes slideInFromBottom{0%{opacity:.1;transform:translateY(100%)}100%{opacity:1;transform:translateY(0)}}@keyframes slideInFromBottomDelay{0%{opacity:0;transform:translateY(100%)}97%{opacity:0;transform:translateY(100%)}100%{opacity:1;transform:translateY(0)}}</style></head>
+  <body style="margin: 0; padding: 0;" data-getresp="">
+    <div id="wrapper">
+      <div id="content">
+        <div class="contentIn narrowIn">
+          <div style="display: none;" id="subscribeFrom" class="lightboxHtmlContent ">
+            <div class="highslide-body">
+              <div class="hsBody subscribeFrom">
+                <h2>Subscribe</h2>
+                <form method="post" id="subscriberForm" action="https://www.mailing.wimhofmethod.com/cgi-bin/add.cgi?u=QP4C">
+                  <fieldset>
+                    <ul>
+                      <li class="fieldLine clearfix">
+                        <div class="formElem txtField">
+                          <div class="fS-Bd">
+                            <input type="text" maxlength="128" id="newsletterName" name="subscriber_name" title="Name">
+                          </div>
+                        </div>
+                      </li>
+                      <li class="fieldLine clearfix">
+                        <div class="formElem txtField">
+                          <div class="fS-Bd">
+                            <input type="text" maxlength="128" id="newsletterEmail" name="subscriber_email" title="Email Address">
+                          </div>
+                        </div>
+                      </li>
+                      <li class="fieldLine">
+                        <input type="submit" onclick="pageTracker._trackPageview ('/newsletter_sign_up');" value="Subscribe" name="link">
+                      </li>
+                    </ul>
+                  </fieldset>
+                  <input type="hidden" name="campaign_name" value="wimhofmethod" id="campaign_name">
+                  <input type="hidden" name="custom_ref" value="WebArchive" id="custom_ref">
+                </form>
+              </div>
+            </div>
+          </div>
+          <div style="display: none;" id="" class="lightboxHtmlContent ">
+            <div class="highslide-body"></div>
+          </div>
+          <script type="text/javascript">
+            function facebook_like()
+            {
+                $.post('/ajax_archive_social_action.html', {'marchive':340260043,'source':'other','service':'facebook', 'action':'like'});
+            }
+            function twitter_twitt()
+            {
+                $.post('/ajax_archive_social_action.html', {'marchive':340260043,'source':'other','service':'twitter'});
+            }
+            function google_plus(data)
+            {
+                if (data.state == 'on') {
+                    $.post('/ajax_archive_social_action.html', {'marchive':340260043,'source':'other','service':'googleplus'});
+                }
+            }
+            function linkedin(data)
+            {
+                $.post('/ajax_archive_social_action.html', {'marchive':340260043,'source':'other','service':'linkedin'});
+            }
+            function pinterest(data)
+            {
+                if (data.state == 'on') {
+                    $.post('/ajax_archive_social_action.html', {'marchive':340260043,'source':'other','service':'pinterest'});
+                }
+            }
+        </script>
+          <div class="folowupMsg  nofwrd" data-screenshot="container" id="messageContainer"><h2 class="msgSubject">Subject:&nbsp;Check out the completely redesigned website!</h2>
+
+
+
+<div class="wrap" style="width: 100%; min-width: 320px; table-layout: fixed; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+<table data-mobile="true" dir="ltr" data-width="500" style="font-size: 16px; background-color: rgb(255, 255, 255);" width="100%" cellspacing="0" cellpadding="0" border="0" align="center">
+    <tbody><tr>
+        <td style="padding:0;margin:0;" valign="top" align="center"><div class="WRAPPER" style="max-width: 500px; margin: auto;"><table class="wrapper" style="width: 500px;" width="500" cellspacing="0" cellpadding="0" border="0" align="center">
+                <tbody><tr><td style="padding: 0px; margin: 0px;" class="responsive-cell"><table data-editable="text" class="text-block" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td class="lh-3" style="padding: 10px; font-family: Arial, Helvetica, sans-serif; color: rgb(0, 56, 70); line-height: 1.35; font-size: 16px;" valign="top" align="left"><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif;">Hi ,<br><br><span style="">How are you?</span></span><div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; background-color: transparent;"><br></span></div><div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif;">We have been crazy busy getting the new website up and running. Come take a look!</span></div></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="line" style="" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="padding: 10px 0px; margin: 0px;" valign="top" align="center"><div style="height: 1px; line-height: 1px; border-top: 2px solid rgb(250, 166, 26);"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="" style="display:block;" createnew="true" width="1" height="1"></div></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="image" data-mobile-stretch="1" style="max-width: 100% !important;" width="100%" cellspacing="0" cellpadding="0" align="center"><tbody><tr><td style="display: inline-block; padding: 10px 0px; margin: 0px;" class="tdBlock responsive-cell" valign="top" align="center"><a href="http://wimhofmethod.com/?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=may-newsletter" title="redesign banner" target="_blank"><img src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/b5006416-042e-4465-9049-f4368a208c25.png" style="border-width: 0px; border-style: none; border-color: transparent; font-size: 12px; display: block;" data-src="https://multimedia.mailing.wimhofmethod.com/wimhofm-BHnu/photos/b5006416-042e-4465-9049-f4368a208c25.png|500|259|500|259|0|0|1" data-origsrc="https://multimedia.mailing.wimhofmethod.com/wimhofm-BHnu/photos/bcac2cdf-1558-499e-9b51-0ac05a424fe1.png" class="mobile-image-stretch-enabled" width="500"></a></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="text" class="text-block" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td class="lh-3" style="padding: 10px; font-size: 16px; font-family: 'Times New Roman', Times, serif; line-height: 1.35;" valign="top" align="left"><div><span style="font-weight: 700; font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);"><font style="font-size: 16px;" size="16">Brand New Bag</font></span></div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);"><font style="font-size: 16px;" size="16">In case you hadn’t noticed yet, <a href="http://wimhofmethod.com/?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=may-newsletter" target="_blank" title="homepage" style="color: rgb(0, 56, 70); font-weight: bold;">wimhofmethod.com</a>
+ sports a whole new coat of paint. We’ve tweaked some of the interface 
+to make things more intuitive, and pages should load much faster.</font></span><div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);"><font style="font-size: 16px;" size="16"><br>In
+ addition to the slick new façade, there’s also been a lot of tinkering 
+under the hood, and we are still ironing out some kinks. Should you 
+encounter any bugs, please report them to support@wimhofmethod.com.</font></span><br></div></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="line" style="" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="padding: 10px 0px; margin: 0px;" valign="top" align="center"><div style="height: 1px; line-height: 1px; border-top: 2px solid rgb(250, 166, 26);"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="" style="display:block;" createnew="true" width="1" height="1"></div></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="image" data-mobile-stretch="1" style="max-width: 100% !important;" width="100%" cellspacing="0" cellpadding="0" align="center"><tbody><tr><td style="display: inline-block; padding: 10px 0px; margin: 0px;" class="tdBlock responsive-cell" valign="top" align="center"><a href="https://wimhofshop.com/?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=may-newsletter" title="t-shirt banner" target="_blank"><img src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/f86f9285-69cd-479b-a4e4-4d13ac7d78f0.jpg" style="border-width: 0px; border-style: none; border-color: transparent; font-size: 12px; display: block;" data-src="https://multimedia.mailing.wimhofmethod.com/wimhofm-BHnu/photos/f86f9285-69cd-479b-a4e4-4d13ac7d78f0.jpg|500|179|500|186|0|0|1" data-origsrc="https://multimedia.mailing.wimhofmethod.com/wimhofm-BHnu/photos/d026e251-ed23-49c0-ac6b-a69204d62c46.jpg" class="mobile-image-stretch-enabled" width="500"></a></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="text" class="text-block" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td class="lh-3" style="padding: 10px; font-size: 16px; font-family: 'Times New Roman', Times, serif; line-height: 1.35;" valign="top" align="left"><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif;"><span style="font-weight: bold; color: rgb(0, 56, 70);"><span style="">Teeming Up</span><br></span><span style="color: rgb(0, 56, 70);">When&nbsp;</span><a href="https://teemill.com/?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=may-newsletter" target="_blank" title="teemill" style="color: rgb(0, 56, 70); font-weight: bold;">Teemill</a><span style="color: rgb(0, 56, 70);">&nbsp;told us about their approach to textile manufacturing, we were very eager to partner with them.</span></span><div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);"><br>Just
+ like we are in the business of recycling air, Teemill repurposes all 
+the natural materials they use to make clothes. To give you a sense of 
+just how far they push the definition of sustainability: the fabric is 
+spun from organic cotton, and the leftover seeds are then pressed into 
+cakes to feed cows. How cool is that?</span></div><div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);"><br>Last
+ month we took part in their ‘One Tee One Kg’ campaign, during which for
+ every order placed with us, a kilogram of ocean-bound plastic was 
+recovered and recycled. The recent Netflix documentary Seaspiracy was an
+ incisive reminder that&nbsp;marine life is in dire straits, and you 
+might just see Wim interview the director in the near future.</span></div><div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);"><br>Teemill have considered their environmental impact at every step of <a href="https://wimhofshop.com/the-journey/?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=may-newsletter" target="_blank" title="journey" style="font-weight: bold; color: rgb(0, 56, 70);">the journey of your future hoodie</a>,
+ including manufacturing, land cultivation, and energy production. Going
+ forward, they will be handling production of all our apparel, and we 
+couldn’t be more excited.</span></div><div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);"><br>We promptly filled the new shop with a bunch of new designs.<br></span></div><div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);"><br></span></div></td></tr></tbody></table></td></tr><tr><td style="padding: 0px;" class="responsive-cell" valign="top" align="center"><div data-box="button" style="width: 100%; margin-top: 0px; margin-bottom: 0px; text-align: center;"><table data-editable="button" style="margin: 0px auto;" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td class="tdBlock" style="display: inline-block; padding: 13px 25px; margin: 0px; background-color: rgb(0, 56, 70); border-radius: 7px;" valign="top" align="center"><a href="https://wimhofshop.com/?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=may-newsletter" style="font-family: Arial,'Helvetica Neue', Helvetica, sans-serif; color: rgb(250, 166, 26); font-size: 18px; text-decoration: none; font-weight: bold;" target="_blank" title="shop button">Check em out!</a></td></tr></tbody></table></div></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="line" style="" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="padding: 10px 0px; margin: 0px;" valign="top" align="center"><div style="height: 1px; line-height: 1px; border-top: 2px solid transparent;"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="" style="display:block;" createnew="true" width="1" height="1"></div></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="line" style="" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="padding: 10px 0px; margin: 0px;" valign="top" align="center"><div style="height: 1px; line-height: 1px; border-top: 2px solid rgb(250, 166, 26);"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="" style="display:block;" createnew="true" width="1" height="1"></div></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="image" data-mobile-stretch="1" style="max-width: 100% !important;" width="100%" cellspacing="0" cellpadding="0" align="center"><tbody><tr><td style="display: inline-block; padding: 10px 0px; margin: 0px;" class="tdBlock responsive-cell" valign="top" align="center"><a href="https://www.wimhofmethod.com/activities/spain-summer-travel/19606/?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=may-newsletter" title="SE banner" target="_blank"><img src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/a378bb81-5163-4644-bd06-0d5f191b8345.jpg" style="border-width: 0px; border-style: none; border-color: transparent; font-size: 12px; display: block;" data-src="https://multimedia.mailing.wimhofmethod.com/wimhofm-BHnu/photos/a378bb81-5163-4644-bd06-0d5f191b8345.jpg|500|281|500|281|0|0|1" data-origsrc="https://multimedia.mailing.wimhofmethod.com/wimhofm-BHnu/photos/0f686c63-720d-4631-a3a2-665856bf5d3a.jpg" class="mobile-image-stretch-enabled" width="500"></a></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="text" class="text-block" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td class="lh-3" style="padding: 10px; font-size: 16px; font-family: 'Times New Roman', Times, serif; line-height: 1.35;" valign="top" align="left"><div><span style="font-weight: bold; font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);">We're Back</span></div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);">With
+ flight restrictions and safety regulations loosening up, we are 
+tentatively bringing back WHM live events. This also heralds the return 
+of our celebrated <a href="https://www.wimhofmethod.com/activities/spain-summer-travel/19606/?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=may-newsletter" target="_blank" title="SE text" style="font-weight: bold; color: rgb(0, 56, 70);">Summer Expedition</a>,
+ after last year’s much lamented hiatus. The first week runs from June 
+28 to July 4, and the second from July 5 to July 11. Is there a better F
+ U to quarantine than spending six days in the Spanish Pyrenees?<br></span><br></td></tr></tbody></table></td></tr><tr><td style="padding: 0px;" class="responsive-cell" valign="top" align="center"><div data-box="button" style="width: 100%; margin-top: 0px; margin-bottom: 0px; text-align: center;"><table data-editable="button" style="margin: 0px auto;" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td class="tdBlock" style="display: inline-block; padding: 13px 25px; margin: 0px; background-color: rgb(0, 56, 70); border-radius: 7px;" valign="top" align="center"><a href="https://www.wimhofmethod.com/activities/spain-summer-travel/19606/?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=may-newsletter" style="font-family: Arial,'Helvetica Neue', Helvetica, sans-serif; color: rgb(250, 166, 26); font-size: 18px; text-decoration: none; font-weight: bold;" target="_blank" title="SE button">SIGN UP</a></td></tr></tbody></table></div></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="text" class="text-block" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td class="lh-3" style="padding: 10px; font-size: 16px; font-family: 'Times New Roman', Times, serif; line-height: 1.35;" valign="top" align="left"><div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);"><br></span></div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);">There are also a few spots left on the last of a triplet of <a href="https://www.wimhofmethod.com/activities/whm-weekend-with-wim-stroe/29299/?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=may-newsletter" target="_blank" title="weekends with Wim" style="font-weight: bold; color: rgb(0, 56, 70);">WHM Weekends with Wim</a>, slated for June 19/20.<br><br>And many of our instructors are also starting to reintroduce their live workshops. <a href="https://www.wimhofmethod.com/activities/?utm_source=newsletter&amp;utm_medium=email&amp;utm_campaign=may-newsletter" target="_blank" title="instructor activities" style="font-weight: bold; color: rgb(0, 56, 70);">Check out what they have on offer</a>&nbsp;and whisk yourself away from those dreary 4 walls.</span><br></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="line" style="" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="padding: 10px 0px; margin: 0px;" valign="top" align="center"><div style="height: 1px; line-height: 1px; border-top: 2px solid rgb(250, 166, 26);"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="" style="display:block;" createnew="true" width="1" height="1"></div></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="text" class="text-block" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td class="lh-3" style="padding: 10px; font-size: 16px; font-family: 'Times New Roman', Times, serif; line-height: 1.35;" valign="top" align="left"><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);">That's all for now. Check out the new website, let us know what you think, and we'll see you next month!<br></span><div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);"><br></span></div><div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);"><font style="font-size: 16px;"><br></font></span></div><div><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif; color: rgb(0, 56, 70);"><font style="font-size: 16px;">Wim &amp; the WHM team</font></span></div></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="line" style="" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="padding: 10px 0px; margin: 0px;" valign="top" align="center"><div style="height: 1px; line-height: 1px; border-top: 2px solid transparent;"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="" style="display:block;" createnew="true" width="1" height="1"></div></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="line" style="" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="padding: 10px 0px; margin: 0px;" valign="top" align="center"><div style="height: 1px; line-height: 1px; border-top: 2px solid rgb(250, 166, 26);"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="" style="display:block;" createnew="true" width="1" height="1"></div></td></tr></tbody></table></td></tr><tr><td style="padding: 0px; margin: 0px;" class="responsive-cell"><table data-editable="preheader" class="text-block" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td class="lh-1" style="padding: 8px; font-family: Helvetica, Arial, sans-serif; color: rgb(0, 56, 70); line-height: 1.15; font-size: 12px;" valign="top" align="center"><span style="color: rgb(0, 56, 70);">&lt; Learn more? Follow us and become part of the community&nbsp;&gt;</span></td></tr></tbody></table></td></tr><tr><td style="padding: 0px; margin: 0px;" class="responsive-cell"><table width="100%" cellspacing="0" cellpadding="0" border="0"><tbody><tr data-columns="yes" style="text-align: center;"><td style="margin: 0px; padding: 0px;" class="responsive-cell" width="25%" valign="top" align="center"><table width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="image" data-mobile-stretch="0" width="123" cellspacing="0" cellpadding="0" align="center"><tbody><tr><td style="display: inline-block; padding: 1px; margin: 0px;" class="tdBlock responsive-cell" valign="top" align="left"><a href="https://www.facebook.com/icemanwimhof/" title="Wim Hof Method Facebook" target="_blank"><img createnew="true" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/498615304.png" data-src="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615304.png|123|71|71|71|0|0|1" data-origsrc="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498614523.png" class="mobile-image-stretch-disabled" style="border-width: 0px; border-style: none; border-color: transparent; font-size: 12px; display: block;" width="123" height="71"></a></td></tr></tbody></table></td></tr></tbody></table></td><td style="margin: 0px; padding: 0px;" class="responsive-cell" width="25%" valign="top" align="center"><table width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="image" data-mobile-stretch="0" width="123" cellspacing="0" cellpadding="0" align="center"><tbody><tr><td style="display: inline-block; padding: 1px; margin: 0px;" class="tdBlock responsive-cell" valign="top" align="left"><a href="https://www.instagram.com/iceman_hof/" title="Wim Hof Method Instagram" target="_blank"><img createnew="true" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/498615305.png" data-src="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615305.png|123|72|72|72|0|0|1" data-origsrc="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498614525.png" class="mobile-image-stretch-disabled" style="border-width: 0px; border-style: none; border-color: transparent; font-size: 12px; display: block;" width="123" height="72"></a></td></tr></tbody></table></td></tr></tbody></table></td><td style="margin: 0px; padding: 0px;" class="responsive-cell" width="25%" valign="top" align="center"><table width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="image" data-mobile-stretch="0" width="123" cellspacing="0" cellpadding="0" align="center"><tbody><tr><td style="display: inline-block; padding: 1px; margin: 0px;" class="tdBlock responsive-cell" valign="top" align="left"><a href="https://twitter.com/iceman_hof" title="Wim Hof Method Twitter" target="_blank"><img createnew="true" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/498615306.png" data-src="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615306.png|123|72|72|72|0|0|1" data-origsrc="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498614527.png" class="mobile-image-stretch-disabled" style="border-width: 0px; border-style: none; border-color: transparent; font-size: 12px; display: block;" width="123" height="72"></a></td></tr></tbody></table></td></tr></tbody></table></td><td style="margin: 0px; padding: 0px;" class="responsive-cell" width="25%" valign="top" align="center"><table width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="image" data-mobile-stretch="0" width="123" cellspacing="0" cellpadding="0" align="center"><tbody><tr><td style="display: inline-block; padding: 1px; margin: 0px; border: 0px none transparent;" class="tdBlock responsive-cell" valign="top" align="left"><a href="https://www.youtube.com/user/wimhof1" title="Wim Hof Method YouTube Channel" target="_blank" style="border-radius: 0px;"><img createnew="true" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/498615307.png" data-src="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615307.png|123|72|72|72|0|0|1" data-origsrc="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498614529.png" class="mobile-image-stretch-disabled" style="border-width: 0px; border-style: none; border-color: transparent; font-size: 12px; display: block;" width="123" height="72"></a></td></tr></tbody></table></td></tr></tbody></table></td></tr></tbody></table></td></tr>
+                
+            <tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="line" style="" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="padding: 10px 0px; margin: 0px;" valign="top" align="center"><div style="height: 1px; line-height: 1px; border-top: 2px solid rgb(250, 166, 26);"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="" style="display:block;" createnew="true" width="1" height="1"></div></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="preheader" class="text-block" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td class="lh-1" style="padding: 8px; font-family: Helvetica, Arial, sans-serif; color: rgb(0, 56, 70); line-height: 1.15; font-size: 12px;" valign="top" align="center"><span style="">&lt; Get the Wim Hof Method App today &gt;</span></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table width="100%" cellspacing="0" cellpadding="0" border="0"><tbody><tr><td style="padding: 0px; margin: 0px;" class="responsive-cell" width="50%" valign="top" align="left"><table width="100%" cellspacing="0" cellpadding="0" border="0"><tbody><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="image" data-mobile-stretch="0" width="250" cellspacing="0" cellpadding="0" align="center"><tbody><tr><td style="display: inline-block; padding: 0px 0px 10px; margin: 0px;" class="tdBlock responsive-cell" valign="top" align="center"><a href="https://itunes.apple.com/us/app/innerfire/id890471578" title="Wim Hof Method iOS App" target="_blank"><img createnew="true" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/498615321.png" data-src="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615321.png|250|60|200|58|0|0|1" data-origsrc="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615320.png" class="mobile-image-stretch-disabled" style="border-width: 0px; border-style: none; border-color: transparent; font-size: 12px; display: block;" width="250" height="60"></a></td></tr></tbody></table></td></tr></tbody></table></td><td style="padding: 0px; margin: 0px;" class="responsive-cell" width="50%" valign="top" align="left"><table width="100%" cellspacing="0" cellpadding="0" border="0"><tbody><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="image" data-mobile-stretch="0" width="250" cellspacing="0" cellpadding="0" align="center"><tbody><tr><td style="display: inline-block; padding: 0px 0px 10px; margin: 0px;" class="tdBlock responsive-cell" valign="top" align="center"><a href="https://play.google.com/store/apps/details?id=nl.deckeron.apps.innerfire" title="Wim Hof Method Android App" target="_blank"><img createnew="true" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/498615323.png" data-src="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615323.png|250|60|200|58|0|0|1" data-origsrc="https://multimedia.mailing.wimhofmethod.com/wimhofm/850/364850/photos/498615322.png" class="mobile-image-stretch-disabled" style="border-width: 0px; border-style: none; border-color: transparent; font-size: 12px; display: block;" width="250" height="60"></a></td></tr></tbody></table></td></tr></tbody></table></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="line" style="" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="padding: 10px 0px; margin: 0px;" valign="top" align="center"><div style="height: 1px; line-height: 1px; border-top: 2px solid rgb(250, 166, 26);"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="" style="display:block;" createnew="true" width="1" height="1"></div></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="preheader" class="text-block" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td class="lh-1" style="padding: 8px; font-family: Helvetica, Arial, sans-serif; color: rgb(0, 56, 70); line-height: 1.15; font-size: 12px;" valign="top" align="center"><span style="font-family: Trebuchet,'Trebuchet MS', Arial, Helvetica, sans-serif;"><font style="font-size: 16px;" size="16"><a href="https://www.wimhofmethod.com/" target="_blank" title="wimhofmethod.com" style="color: rgb(0, 56, 70);">wimhofmethod.com</a></font></span></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="line" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="padding: 10px 0px; margin: 0px;" valign="top" align="center"><div style="height:1px;line-height:1px;border-top-width:3px;border-top-style:solid;border-top-color:#dedede;"><img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" alt="" style="display:block;" createnew="true" width="1" height="1"></div></td></tr></tbody></table></td></tr><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" valign="top" align="center"><table data-editable="preheader" class="text-block" width="100%" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td class="lh-1" style="padding: 8px; font-family: Helvetica, Arial, sans-serif; color: rgb(0, 56, 70); line-height: 1.15; font-size: 12px;" valign="top" align="center"><span style="">You're receiving this because you signed up for the Wim Hof Method.</span><div><span style="background-color: transparent;">Manage your preferences below.</span></div></td></tr></tbody></table></td></tr></tbody></table></div>
+            
+        </td>
+    </tr>
+</tbody><tfoot><tr><td style="margin: 0px; padding: 0px;" class="responsive-cell" align="center"><table class="wrapper" style="width: 500px;" width="500" cellspacing="0" cellpadding="0" border="0" align="center"><tbody><tr><td style="background-color: #fff;" valign="top" align="center"><table class="wrapper" width="100%" cellspacing="0" cellpadding="0" border="0" align="center">
+    <tbody><tr>
+        <td class="column" style="min-width: 320px;margin: 0px; padding: 0px;" width="auto" valign="top" align="center">
+            <table cellspacing="0" cellpadding="0" border="0" align="left">
+                <tbody><tr>
+                    <td style="margin: 0; padding:0; padding-left:10px;padding-top:10px" valign="middle" align="left">
+                        <span style="font-family: Arial, Helvetica, sans-serif;color: #939598;font-size: 10px;">
+                            Innerfire BV, Keizersgracht 516, 1017 EJ, Amsterdam, Netherlands
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="margin: 0; padding: 0; padding-left:10px;padding-top:10px" valign="middle" align="left">
+                        <span style="font-family: Arial, Helvetica, sans-serif; color: #939598; font-size: 10px;">
+                            You may <a href="https://www.mailing.wimhofmethod.com/unsubscribe.html?x=a62e&amp;m=aQSXO&amp;mc=3&amp;s=W&amp;u=QP4C&amp;z=W3ZxEEb&amp;pt=unsubscribe" style="color: #0985f5; text-decoration: underline;">unsubscribe</a> or <a href="https://www.mailing.wimhofmethod.com/change_details.html?x=a62e&amp;m=aQSXO&amp;s=W&amp;u=QP4C&amp;z=WEeD6X1&amp;pt=change_details" style="color:#0985f5; text-decoration: underline;">change your contact details</a> at any time.
+                        </span>
+                    </td>
+                </tr>
+            </tbody></table>
+        </td>
+        <td style="margin: 0px; padding:0px;padding-top:10px;" valign="top" align="right">
+            <table cellspacing="0" cellpadding="0" border="0" align="right">
+                <tbody><tr>
+                    <td style="margin: 0; padding: 0;padding-right:10px;" valign="top" align="right">
+                        
+                            
+                        
+                    </td>
+                </tr>
+            </tbody></table>
+        </td>
+    </tr>
+</tbody></table></td></tr></tbody></table></td></tr></tfoot></table>
+</div>
+</div>
+          <script type="text/javascript" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/screenshot_page-25aaf0ddc6.js"></script>
+        </div>
+      </div>
+    </div>
+  
+
+<iframe scrolling="no" allowtransparency="true" src="Newsletter%20May%202021%20-%20Check%20out%20the%20completely%20redesigned%20website!_files/widget_iframe.htm" title="Twitter settings iframe" style="display: none;" frameborder="0"></iframe><div id="fb-root" class=" fb_reset"><div style="position: absolute; top: -10000px; width: 0px; height: 0px;"><div></div></div></div><iframe id="rufous-sandbox" scrolling="no" allowtransparency="true" allowfullscreen="true" style="position: absolute; visibility: hidden; display: none; width: 0px; height: 0px; padding: 0px; border: medium none;" title="Twitter analytics iframe" frameborder="0"></iframe></body></html>
